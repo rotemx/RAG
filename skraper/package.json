@@ -1,0 +1,32 @@
+{
+  "name": "skraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "scrape": "ts-node src/scraper.ts scrape",
+    "scrape:range": "ts-node src/scraper.ts scrape",
+    "download": "ts-node src/scraper.ts download",
+    "stats": "ts-node src/scraper.ts stats",
+    "start": "ts-node src/scraper.ts all",
+    "db:up": "docker-compose up -d",
+    "db:down": "docker-compose down",
+    "db:logs": "docker-compose logs -f postgres"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
+    "axios": "^1.13.2",
+    "pg": "^8.16.3",
+    "playwright": "^1.57.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.8"
+  }
+}
