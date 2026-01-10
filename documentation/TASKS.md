@@ -56,7 +56,7 @@
 **So that** code is maintainable and scalable
 
 ### Tasks:
-- [ ] **Task 1.1.1**: Create project directory structure
+- [R:2] **Task 1.1.1**: Create project directory structure
   ```
   /israeli-law-rag/
   ├── frontend/           # Vue.js 3 application
@@ -66,10 +66,10 @@
   ├── tests/              # Test suites
   └── documentation/      # Project documentation
   ```
-- [ ] **Task 1.1.2**: Initialize root `package.json` with workspaces
-- [ ] **Task 1.1.3**: Configure TypeScript (`tsconfig.json`) with strict mode
-- [ ] **Task 1.1.4**: Set up ESLint and Prettier for code quality
-- [ ] **Task 1.1.5**: Create `.gitignore` with appropriate exclusions
+- [C:1] **Task 1.1.2**: Initialize root `package.json` with workspaces
+- [C:3] **Task 1.1.3**: Configure TypeScript (`tsconfig.json`) with strict mode
+- [C:4] **Task 1.1.4**: Set up ESLint and Prettier for code quality
+- [C:1] **Task 1.1.5**: Create `.gitignore` with appropriate exclusions
 - [ ] **Task 1.1.6**: Initialize Git repository with conventional commits
 
 ## Story 1.2: Configure Vercel Deployment

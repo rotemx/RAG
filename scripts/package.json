@@ -1,0 +1,18 @@
+{
+  "name": "@israeli-law-rag/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Data processing scripts for Israeli Law RAG Chatbot",
+  "type": "module",
+  "scripts": {
+    "process-pdfs": "tsx process-pdfs.ts",
+    "cluster-topics": "tsx cluster-topics.ts"
+  },
+  "dependencies": {
+    "@israeli-law-rag/lib": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.2"
+  }
+}

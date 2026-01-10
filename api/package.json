@@ -1,0 +1,20 @@
+{
+  "name": "@israeli-law-rag/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vercel serverless API functions for Israeli Law RAG Chatbot",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.6",
+    "@qdrant/js-client-rest": "^1.8.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.4.2"
+  }
+}

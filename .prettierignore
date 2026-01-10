@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+.vercel
+coverage
+
+# Generated files
+*.min.js
+*.min.css
+
+# Package manager
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# IDE
+.idea
+.vscode
+
+# Logs
+*.log
+
+# Legacy/external code
+skraper
+
+# Documentation auto-generated
+*.generated.md

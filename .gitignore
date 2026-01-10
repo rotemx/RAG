@@ -1,16 +1,100 @@
-# OS files
-.DS_Store
-
-# IDE
-.idea/
-
-# Logs
-*.log
-firebase-debug.log
-
-# Node
+# Dependencies
 node_modules/
+.pnpm-store/
 
-# Environment
+# Build outputs
+dist/
+build/
+.output/
+.nuxt/
+.next/
+
+# TypeScript
+*.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Vue / Vite
+*.local
+.vite/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Playwright
+playwright-report/
+playwright/.cache/
+test-results/
+
+# Environment variables
 .env
 .env.local
+.env.*.local
+.env.development
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+firebase-debug.log
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Caches
+.eslintcache
+.prettiercache
+.cache/
+*.cache
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Embeddings and ML model caches
+.transformers_cache/
+models/
+
+# PDF processing artifacts
+*.pdf.extracted/
+extracted-text/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets and credentials
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# Debug
+.debug/
+
+# Package lock files (optional - uncomment if using single package manager)
+# yarn.lock
+# pnpm-lock.yaml
+# package-lock.json

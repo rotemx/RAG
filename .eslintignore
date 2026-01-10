@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+.vercel
+coverage
+
+# Generated files
+*.min.js
+
+# IDE
+.idea
+.vscode
+
+# Logs
+*.log
+
+# Legacy/external code
+skraper
+
+# Type declaration files
+*.d.ts
+
+# Config files (handled separately)
+*.config.js
+*.config.cjs
+vite.config.ts
+tailwind.config.js
+postcss.config.js
