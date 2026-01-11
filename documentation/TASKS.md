@@ -250,7 +250,7 @@
   - Provider-specific configs: `AnthropicConfig`, `OpenAIConfig`, `GeminiConfig`
   - Utility functions: `createDefaultConfig()`, `validateLLMConfig()`, message helpers
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [C:1] **Task 2.1.2**: Create abstract `LLMAdapter` base class
+- [x] **Task 2.1.2**: Create abstract `LLMAdapter` base class
   - Implementation: `lib/src/llm/adapter.ts`
   - Abstract base class `LLMAdapter` with:
     - Abstract `complete()` method for single responses
@@ -262,7 +262,7 @@
   - Custom `LLMError` class with structured error info
   - Utility functions: `isLLMError()`, `isRetryableError()`, `getRetryDelay()`
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [ ] **Task 2.1.3**: Implement factory function `createLLMAdapter()`
+- [C:1] **Task 2.1.3**: Implement factory function `createLLMAdapter()`
   - Implementation: `lib/src/llm/factory.ts`
   - Main factory function `createLLMAdapter()` creates adapter based on provider config
   - Provider-specific convenience functions: `createAnthropicAdapter()`, `createOpenAIAdapter()`, `createGeminiAdapter()`
