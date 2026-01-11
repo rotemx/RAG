@@ -174,12 +174,12 @@
 
 ### Tasks:
 
-- [C:2] **Task 1.4.1**: Create `law_chunks` table for processed text chunks
+- [x] **Task 1.4.1**: Create `law_chunks` table for processed text chunks
   - Migration SQL: `lib/src/db/migrations/001_create_law_chunks.sql`
   - TypeScript types: `lib/src/db/types.ts`
   - Database client: `lib/src/db/client.ts`
   - Run migration with: `psql -h localhost -U scraper -d knesset_laws -f lib/src/db/migrations/001_create_law_chunks.sql`
-- [ ] **Task 1.4.2**: Create `topics` table for auto-generated categories
+- [C:2] **Task 1.4.2**: Create `topics` table for auto-generated categories
   - Migration SQL: `lib/src/db/migrations/002_create_topics.sql`
   - TypeScript types: `lib/src/db/types.ts` (Topic, TopicRow, CreateTopicInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for topics)
