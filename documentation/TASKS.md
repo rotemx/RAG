@@ -153,7 +153,7 @@
   - Comprehensive setup guide created with step-by-step instructions
   - Free tier provides: 1 GB storage, 1 cluster, ~500K vectors
   - **Manual steps required**: User must create account at https://cloud.qdrant.io/
-- [C:1] **Task 1.3.2**: Create cluster with appropriate settings - Setup guide at `documentation/QDRANT_CLOUD_SETUP.md`, client code at `lib/src/qdrant/`
+- [x] **Task 1.3.2**: Create cluster with appropriate settings - Setup guide at `documentation/QDRANT_CLOUD_SETUP.md`, client code at `lib/src/qdrant/`
   - Comprehensive setup guide with 9 steps including verification
   - Recommended cluster settings defined in `lib/src/qdrant/config.ts`:
     - Cluster name: `israeli-law-rag`
@@ -320,7 +320,7 @@
   - Package: `@anthropic-ai/sdk@^0.20.6` (installed: 0.20.9)
   - Location: `lib/package.json` dependencies
   - Verified: Package imports successfully
-- [ ] **Task 2.2.2**: Implement `AnthropicAdapter` class:
+- [C:1] **Task 2.2.2**: Implement `AnthropicAdapter` class:
   - Implementation: `lib/src/llm/adapters/anthropic.ts`
   - `complete()` method for single responses
   - `stream()` method for streaming responses

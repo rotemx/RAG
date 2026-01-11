@@ -27,6 +27,7 @@ Choose one of the following sign-up methods:
 ### Step 3: Verify Your Email
 
 If you signed up with email:
+
 1. Check your inbox for a verification email from Qdrant
 2. Click the verification link
 3. Return to the Qdrant Cloud dashboard
@@ -34,6 +35,7 @@ If you signed up with email:
 ### Step 4: Confirm Free Tier Selection
 
 The free tier includes:
+
 - **1 GB** of storage
 - **1 cluster**
 - Shared infrastructure
@@ -44,18 +46,19 @@ This is sufficient for the Israeli Law RAG project (~3,900 documents).
 ### Step 5: Access the Dashboard
 
 Once logged in, you should see the Qdrant Cloud dashboard where you can:
+
 - Create clusters
 - Manage API keys
 - Monitor usage
 
 ## Free Tier Limits
 
-| Resource | Limit |
-|----------|-------|
-| Storage | 1 GB |
-| Clusters | 1 |
-| Vectors | ~500,000 (depends on dimensions) |
-| API Rate | Reasonable use |
+| Resource | Limit                            |
+| -------- | -------------------------------- |
+| Storage  | 1 GB                             |
+| Clusters | 1                                |
+| Vectors  | ~500,000 (depends on dimensions) |
+| API Rate | Reasonable use                   |
 
 ## Next Steps
 
@@ -87,16 +90,21 @@ After completing account creation:
 ### Step 3: Configure Cluster Settings
 
 #### Cluster Name
+
 - **Name**: `israeli-law-rag` (or similar descriptive name)
 - Use lowercase letters, numbers, and hyphens only
 
 #### Region Selection
+
 Choose a region closest to your deployment location:
+
 - **Recommended for Vercel**: `aws-us-east-1` or `gcp-us-east1`
 - This minimizes latency between your Vercel serverless functions and Qdrant
 
 #### Node Configuration (Free Tier)
+
 The free tier has fixed settings:
+
 - **RAM**: 1 GB (shared)
 - **vCPUs**: Shared
 - **Disk**: 1 GB
@@ -135,6 +143,7 @@ QDRANT_API_KEY=<your-api-key>
 ```
 
 Replace:
+
 - `<your-cluster-id>` with your actual cluster ID
 - `<region>` with your cluster region (e.g., `us-east.aws`)
 - `<your-api-key>` with the API key you generated
@@ -150,6 +159,7 @@ curl -X GET "${QDRANT_URL}/collections" \
 ```
 
 Expected response (empty collections list):
+
 ```json
 {
   "result": {
@@ -162,20 +172,100 @@ Expected response (empty collections list):
 
 ### Cluster Configuration Summary
 
-| Setting | Value | Rationale |
-|---------|-------|-----------|
-| Tier | Free | Sufficient for ~500K vectors with 1024 dimensions |
-| Region | aws-us-east-1 | Low latency to Vercel serverless |
-| Storage | 1 GB | Handles ~3,900 law documents |
-| Name | israeli-law-rag | Descriptive and project-specific |
+| Setting | Value           | Rationale                                         |
+| ------- | --------------- | ------------------------------------------------- |
+| Tier    | Free            | Sufficient for ~500K vectors with 1024 dimensions |
+| Region  | aws-us-east-1   | Low latency to Vercel serverless                  |
+| Storage | 1 GB            | Handles ~3,900 law documents                      |
+| Name    | israeli-law-rag | Descriptive and project-specific                  |
+
+### Step 9: Verify Cluster with Script
+
+Run the verification script to ensure your cluster is properly configured:
+
+```bash
+# Basic verification
+npm run verify-qdrant -w @israeli-law-rag/scripts
+
+# With detailed diagnostics
+npm run verify-qdrant -w @israeli-law-rag/scripts -- --verbose
+
+# Show capacity planning estimates
+npm run verify-qdrant -w @israeli-law-rag/scripts -- --capacity
+```
+
+Expected output for successful verification:
+
+```
+════════════════════════════════════════════════════════════
+QDRANT CLUSTER VERIFICATION
+════════════════════════════════════════════════════════════
+
+Step 1: Validating environment variables...
+  ✓ Environment variables are valid.
+
+Step 2: Loading configuration...
+  URL:             https://xxx.us-east.aws.cloud.qdrant.io:6333
+  Collection:      israeli_laws
+  Vector Size:     1024
+  Distance Metric: Cosine
+  Timeout:         30000ms
+
+Step 3: Checking cluster health...
+  ✓ Cluster is healthy!
+  Collections count: 0
+
+Step 4: Checking for collection...
+  ⚠ Collection 'israeli_laws' does not exist yet.
+    This is expected if you have not run Task 1.3.3 yet.
+
+If the collection exists:
+  ✓ Collection 'israeli_laws' exists.
+  Indexed vectors: 0
+  Points count:    0
+  Status:          green
+
+════════════════════════════════════════════════════════════
+✓ VERIFICATION COMPLETE
+════════════════════════════════════════════════════════════
+
+Your Qdrant cluster is properly configured and accessible.
+
+Next steps:
+  1. npm run create-collection -w @israeli-law-rag/scripts
+     (Task 1.3.3: Create the israeli_laws collection)
+
+  2. npm run create-indexes -w @israeli-law-rag/scripts
+     (Task 1.3.4: Create payload indexes for filtering)
+```
 
 ### Programmatic Cluster Verification
 
-You can also verify the cluster connection programmatically using the TypeScript client. See `lib/src/qdrant/client.ts` for the Qdrant client configuration.
+You can also verify the cluster connection programmatically using the TypeScript client:
+
+```typescript
+import {
+  runClusterDiagnostics,
+  verifyClusterSettings,
+  formatDiagnosticsReport,
+  formatSettingsVerification,
+} from '@israeli-law-rag/lib';
+
+// Run comprehensive diagnostics
+const diagnostics = await runClusterDiagnostics();
+console.log(formatDiagnosticsReport(diagnostics));
+
+// Verify collection settings match expected values
+const verification = await verifyClusterSettings();
+console.log(formatSettingsVerification(verification));
+```
+
+See `lib/src/qdrant/client.ts` for all available diagnostic functions.
 
 ### Capacity Planning
 
 For the Israeli Law RAG project:
+
 - **Documents**: ~3,900 law PDFs
 - **Estimated chunks**: ~40,000 (averaging 10 chunks per document)
 - **Vector dimensions**: 1024 (e5-large)
@@ -194,6 +284,7 @@ For the Israeli Law RAG project:
 ### Free Tier Exhausted
 
 If you exceed the 1 GB limit:
+
 1. Delete unused collections
 2. Reduce vector dimensions
 3. Consider upgrading to paid tier
@@ -207,4 +298,4 @@ If you exceed the 1 GB limit:
 
 ---
 
-*Created for Israeli Law RAG Chatbot Project - January 2025*
+_Created for Israeli Law RAG Chatbot Project - January 2025_

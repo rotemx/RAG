@@ -26,6 +26,7 @@ CURRENT_TASK_LOG=""
 CURRENT_TASK=""
 CURRENT_PHASE=""  # Tracks: "implement" or "review"
 CURRENT_REVIEW_ITERATION=0
+CURRENT_TASK_FILES=""  # Files related to current task (newline-separated)
 
 # Rate limit handling
 RATE_LIMIT_WAIT_SECONDS=60      # Initial wait time when rate limited
@@ -97,6 +98,12 @@ save_task_progress() {
   local uncommitted=$(get_uncommitted_files)
   local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
+  # Also save the task files list
+  if [ -n "$CURRENT_TASK_FILES" ]; then
+    local files_path=$(get_task_files_path "$task_id")
+    printf '%s\n' "$CURRENT_TASK_FILES" > "$files_path"
+  fi
+
   cat > "$progress_file" << PROGRESS_EOF
 # Task In Progress: $task_id
 
@@ -109,7 +116,12 @@ $task
 - **Interrupted At**: $timestamp
 - **Log File**: $CURRENT_TASK_LOG
 
-## Uncommitted Files
+## Task-Related Files
+\`\`\`
+${CURRENT_TASK_FILES:-No task files tracked}
+\`\`\`
+
+## Currently Uncommitted Files
 \`\`\`
 ${uncommitted:-No uncommitted files}
 \`\`\`
@@ -118,7 +130,7 @@ ${uncommitted:-No uncommitted files}
 When resuming this task:
 1. If phase is "implement": Implementation was interrupted, may need to complete or verify
 2. If phase is "review": Code review iteration $review_iter was interrupted, continue from there
-3. Check the uncommitted files above for partial work
+3. The task-related files list above contains ALL files for this task
 4. Review the log file for context on what was done
 
 PROGRESS_EOF
@@ -172,6 +184,105 @@ delete_task_progress() {
     rm -f "$progress_file"
   fi
 
+  return 0
+}
+
+# Get path to task files list
+get_task_files_path() {
+  local task_id="$1"
+  echo "$PROGRESS_DIR/task_${task_id}_files.txt"
+}
+
+# Save list of files related to current task
+# Captures all uncommitted files at this point
+save_task_files() {
+  local task="$1"
+  local task_id=$(get_task_id "$task")
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local files_path=$(get_task_files_path "$task_id")
+  local current_files=$(get_uncommitted_files)
+
+  if [ -n "$current_files" ]; then
+    # Save to file for persistence
+    printf '%s\n' "$current_files" > "$files_path"
+    # Also update global variable
+    CURRENT_TASK_FILES="$current_files"
+  fi
+
+  return 0
+}
+
+# Load task files list from saved file
+# Sets CURRENT_TASK_FILES global variable
+load_task_files() {
+  local task="$1"
+  local task_id=$(get_task_id "$task")
+
+  CURRENT_TASK_FILES=""
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local files_path=$(get_task_files_path "$task_id")
+
+  if [ -f "$files_path" ]; then
+    CURRENT_TASK_FILES=$(cat "$files_path")
+    return 0
+  fi
+
+  return 1
+}
+
+# Add newly modified files to the task files list
+# Called after each review iteration to capture any new files
+update_task_files() {
+  local task="$1"
+  local task_id=$(get_task_id "$task")
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local files_path=$(get_task_files_path "$task_id")
+  local current_uncommitted=$(get_uncommitted_files)
+
+  # Merge existing task files with any new uncommitted files
+  if [ -n "$CURRENT_TASK_FILES" ] && [ -n "$current_uncommitted" ]; then
+    # Combine and deduplicate
+    CURRENT_TASK_FILES=$(printf '%s\n%s' "$CURRENT_TASK_FILES" "$current_uncommitted" | sort -u)
+  elif [ -n "$current_uncommitted" ]; then
+    CURRENT_TASK_FILES="$current_uncommitted"
+  fi
+
+  # Save updated list
+  if [ -n "$CURRENT_TASK_FILES" ]; then
+    printf '%s\n' "$CURRENT_TASK_FILES" > "$files_path"
+  fi
+
+  return 0
+}
+
+# Delete task files list (called on task completion)
+delete_task_files() {
+  local task="$1"
+  local task_id=$(get_task_id "$task")
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local files_path=$(get_task_files_path "$task_id")
+
+  if [ -f "$files_path" ]; then
+    rm -f "$files_path"
+  fi
+
+  CURRENT_TASK_FILES=""
   return 0
 }
 
@@ -490,6 +601,10 @@ Instructions:
     return 1
   fi
 
+  # Save the list of task-related files for review phase
+  save_task_files "$task"
+  log "IMPLEMENT: saved task files list for review"
+
   log "IMPLEMENT: files created/modified:"
   printf '%s\n' "$uncommitted" | while IFS= read -r file; do
     log "  - $file"
@@ -503,18 +618,24 @@ Instructions:
 # ─────────────────────────────────────────────────────────────────
 
 # Claude Code Review - returns 0 if no issues, 1 if issues found/fixed
+# Reviews ALL task-related files (not just currently uncommitted)
 claude_review() {
   local task="$1"
-  local uncommitted_files=$(get_uncommitted_files)
 
-  if [ -z "$uncommitted_files" ]; then
+  # Update task files list to include any new files from previous review iterations
+  update_task_files "$task"
+
+  # Use the full task files list (all files related to this task)
+  local files_to_review="$CURRENT_TASK_FILES"
+
+  if [ -z "$files_to_review" ]; then
     log "CLAUDE CR: no files to review"
     return 0  # No files means nothing to fix - clean state
   fi
 
   # Count files to review
-  local file_count=$(echo "$uncommitted_files" | wc -l | tr -d ' ')
-  log "CLAUDE CR: reviewing $file_count files"
+  local file_count=$(echo "$files_to_review" | wc -l | tr -d ' ')
+  log "CLAUDE CR: reviewing $file_count task-related files"
 
   # Get truncated diff to avoid "Prompt is too long" error
   # Limit to first 500 lines of diff
@@ -526,20 +647,20 @@ claude_review() {
 ... (diff truncated, showing 500 of $diff_lines lines)"
   fi
 
-  # Build the prompt
-  local prompt="You are performing a code review of uncommitted files.
+  # Build the prompt - review ALL task-related files
+  local prompt="You are performing a code review of all files related to a task.
 
 TASK: $task
 
-UNCOMMITTED FILES ($file_count files):
-$uncommitted_files
+TASK-RELATED FILES ($file_count files):
+$files_to_review
 
 GIT DIFF (may be truncated for large changes):
 $git_diff
 
 Instructions:
-1. Review the uncommitted files listed above
-2. Check for: bugs, security issues, performance problems, code style
+1. Review ALL the task-related files listed above (not just the diff)
+2. Read each file completely to check for: bugs, security issues, performance problems, code style
 3. Fix ALL critical and high severity issues
 4. Report what you fixed
 5. If no issues found, respond with exactly: NO_ISSUES_FOUND"
@@ -644,6 +765,12 @@ main() {
       log "  Previous phase: $RESUME_PHASE"
       log "  Previous review iteration: $RESUME_REVIEW_ITER"
 
+      # Load the saved task files list
+      if load_task_files "$task"; then
+        local file_count=$(echo "$CURRENT_TASK_FILES" | wc -l | tr -d ' ')
+        log "  Loaded $file_count task-related files"
+      fi
+
       if [ "$RESUME_PHASE" = "review" ]; then
         # If we were in review phase, skip implementation
         skip_implement="true"
@@ -660,9 +787,11 @@ main() {
         update_status "$task" "!"
         log "TASK FAILED: $task (implementation failed)"
         delete_task_progress "$task"
+        delete_task_files "$task"
         failed=$((failed + 1))
         CURRENT_TASK=""
         CURRENT_PHASE=""
+        CURRENT_TASK_FILES=""
         continue
       fi
     fi
@@ -692,8 +821,9 @@ EOF
       log "TASK COMPLETED: $task"
       completed=$((completed + 1))
 
-      # Delete progress file on successful completion
+      # Delete progress and task files on successful completion
       delete_task_progress "$task"
+      delete_task_files "$task"
 
       # Generate and log status summary after each completed task
       generate_status_summary
@@ -701,12 +831,14 @@ EOF
       update_status "$task" "!"
       log "TASK FAILED: $task (review phase failed)"
       delete_task_progress "$task"
+      delete_task_files "$task"
       failed=$((failed + 1))
     fi
 
     # Clear current task after processing
     CURRENT_TASK=""
     CURRENT_PHASE=""
+    CURRENT_TASK_FILES=""
   done
 
   local end_time=$(date +%s)
