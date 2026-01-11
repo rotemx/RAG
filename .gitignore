@@ -43,6 +43,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 firebase-debug.log
+automation_*.log
 
 # OS files
 .DS_Store
@@ -75,10 +76,23 @@ temp/
 # Embeddings and ML model caches
 .transformers_cache/
 models/
+.onnx_cache/
 
 # PDF processing artifacts
 *.pdf.extracted/
 extracted-text/
+
+# Skraper downloads and outputs
+skraper/downloads/
+skraper/*.log
+
+# Batch processing
+checkpoints/
+*.checkpoint.json
+
+# Vector database (local)
+qdrant_storage/
+.qdrant/
 
 # Database
 *.sqlite

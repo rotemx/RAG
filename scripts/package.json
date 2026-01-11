@@ -5,8 +5,17 @@
   "description": "Data processing scripts for Israeli Law RAG Chatbot",
   "type": "module",
   "scripts": {
-    "process-pdfs": "tsx process-pdfs.ts",
-    "cluster-topics": "tsx cluster-topics.ts"
+    "verify-qdrant": "tsx src/verify-qdrant-cluster.ts",
+    "create-collection": "tsx src/create-collection.ts",
+    "create-indexes": "tsx src/create-indexes.ts",
+    "process-pdfs": "tsx src/process-pdfs.ts",
+    "cluster-topics": "tsx src/cluster-topics.ts",
+    "migrate": "tsx src/run-migrations.ts",
+    "migrate:up": "tsx src/run-migrations.ts up",
+    "migrate:down": "tsx src/run-migrations.ts down",
+    "migrate:status": "tsx src/run-migrations.ts status",
+    "migrate:reset": "tsx src/run-migrations.ts reset",
+    "migrate:refresh": "tsx src/run-migrations.ts refresh"
   },
   "dependencies": {
     "@israeli-law-rag/lib": "*"
