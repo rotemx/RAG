@@ -242,7 +242,7 @@
 
 ### Tasks:
 
-- [C:1] **Task 2.1.1**: Define TypeScript interfaces:
+- [x] **Task 2.1.1**: Define TypeScript interfaces:
   - Implementation: `lib/src/llm/types.ts`
   - Includes Zod schemas with inferred TypeScript types
   - Core interfaces: `LLMConfig`, `LLMMessage`, `LLMResponse`
@@ -250,7 +250,7 @@
   - Provider-specific configs: `AnthropicConfig`, `OpenAIConfig`, `GeminiConfig`
   - Utility functions: `createDefaultConfig()`, `validateLLMConfig()`, message helpers
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [ ] **Task 2.1.2**: Create abstract `LLMAdapter` base class
+- [~] **Task 2.1.2**: Create abstract `LLMAdapter` base class
   - Implementation: `lib/src/llm/adapter.ts`
   - Abstract base class `LLMAdapter` with:
     - Abstract `complete()` method for single responses
