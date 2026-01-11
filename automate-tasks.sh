@@ -143,6 +143,14 @@ run_claude_with_retry() {
 }
 
 get_next_task() {
+  # First, look for in-progress tasks (~ or C:N or R:N status) to resume
+  local in_progress
+  in_progress=$(grep -m1 -E '^\- \[(~|C:[0-9]+|R:[0-9]+)\]' "$TASKS_FILE" | sed 's/^- \[[^]]*\] //' || echo "")
+  if [ -n "$in_progress" ]; then
+    echo "$in_progress"
+    return
+  fi
+  # If no in-progress tasks, get next pending task
   grep -m1 '^\- \[ \]' "$TASKS_FILE" | sed 's/^- \[ \] //' || echo ""
 }
 
