@@ -18,19 +18,23 @@ done
 # ─────────────────────────────────────────────────────────────────
 TASKS_FILE="documentation/TASKS.md"
 LOGS_DIR="documentation/logs"
+PROGRESS_DIR="documentation/logs/in-progress"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$LOGS_DIR/automation_${TIMESTAMP}.log"
 MAX_REVIEW_ITERATIONS=10
 CURRENT_TASK_LOG=""
 CURRENT_TASK=""
+CURRENT_PHASE=""  # Tracks: "implement" or "review"
+CURRENT_REVIEW_ITERATION=0
 
 # Rate limit handling
 RATE_LIMIT_WAIT_SECONDS=60      # Initial wait time when rate limited
 RATE_LIMIT_MAX_WAIT=3600        # Max wait time (1 hour)
 RATE_LIMIT_BACKOFF_MULTIPLIER=2 # Exponential backoff multiplier
 
-# Ensure logs directory exists
+# Ensure logs and progress directories exist
 mkdir -p "$LOGS_DIR"
+mkdir -p "$PROGRESS_DIR"
 
 # Validate TASKS_FILE exists
 if [ ! -f "$TASKS_FILE" ]; then
@@ -64,6 +68,111 @@ set_task_log() {
   fi
   local timestamp=$(date +%Y%m%d_%H%M%S)
   CURRENT_TASK_LOG="$LOGS_DIR/task_${task_num}_${timestamp}.log"
+}
+
+# Extract task ID (e.g., "1.2.3") from task string
+get_task_id() {
+  local task="$1"
+  echo "$task" | sed -n 's/.*Task \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p'
+}
+
+# Get path to task-in-progress file
+get_progress_file() {
+  local task_id="$1"
+  echo "$PROGRESS_DIR/task_${task_id}.md"
+}
+
+# Save task progress to MD file (called on interrupt)
+save_task_progress() {
+  local task="$1"
+  local phase="$2"
+  local review_iter="$3"
+  local task_id=$(get_task_id "$task")
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local progress_file=$(get_progress_file "$task_id")
+  local uncommitted=$(get_uncommitted_files)
+  local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+  cat > "$progress_file" << PROGRESS_EOF
+# Task In Progress: $task_id
+
+## Task
+$task
+
+## Status
+- **Phase**: $phase
+- **Review Iteration**: $review_iter
+- **Interrupted At**: $timestamp
+- **Log File**: $CURRENT_TASK_LOG
+
+## Uncommitted Files
+\`\`\`
+${uncommitted:-No uncommitted files}
+\`\`\`
+
+## Resume Instructions
+When resuming this task:
+1. If phase is "implement": Implementation was interrupted, may need to complete or verify
+2. If phase is "review": Code review iteration $review_iter was interrupted, continue from there
+3. Check the uncommitted files above for partial work
+4. Review the log file for context on what was done
+
+PROGRESS_EOF
+
+  return 0
+}
+
+# Load task progress from MD file (returns phase and review iteration)
+# Sets RESUME_PHASE and RESUME_REVIEW_ITER global variables
+load_task_progress() {
+  local task="$1"
+  local task_id=$(get_task_id "$task")
+
+  RESUME_PHASE=""
+  RESUME_REVIEW_ITER=0
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local progress_file=$(get_progress_file "$task_id")
+
+  if [ ! -f "$progress_file" ]; then
+    return 1
+  fi
+
+  # Extract phase from the progress file
+  RESUME_PHASE=$(grep -m1 '^\- \*\*Phase\*\*:' "$progress_file" | sed 's/.*: //')
+  RESUME_REVIEW_ITER=$(grep -m1 '^\- \*\*Review Iteration\*\*:' "$progress_file" | sed 's/.*: //')
+
+  # Default to 0 if not found or not a number
+  if ! [[ "$RESUME_REVIEW_ITER" =~ ^[0-9]+$ ]]; then
+    RESUME_REVIEW_ITER=0
+  fi
+
+  return 0
+}
+
+# Delete task progress file (called on task completion)
+delete_task_progress() {
+  local task="$1"
+  local task_id=$(get_task_id "$task")
+
+  if [ -z "$task_id" ]; then
+    return 1
+  fi
+
+  local progress_file=$(get_progress_file "$task_id")
+
+  if [ -f "$progress_file" ]; then
+    rm -f "$progress_file"
+  fi
+
+  return 0
 }
 
 log() {
@@ -333,15 +442,36 @@ generate_status_summary() {
 # ─────────────────────────────────────────────────────────────────
 implement_task() {
   local task="$1"
+  local resuming="${2:-false}"
+
+  # Set current phase for trap
+  CURRENT_PHASE="implement"
+  CURRENT_REVIEW_ITERATION=0
 
   log "IMPLEMENTING: $task"
   update_status "$task" "~"
 
-  # Build the prompt
+  # Build the prompt with resume context if applicable
+  local resume_context=""
+  if [ "$resuming" = "true" ]; then
+    local task_id=$(get_task_id "$task")
+    local progress_file=$(get_progress_file "$task_id")
+    if [ -f "$progress_file" ]; then
+      resume_context="
+
+IMPORTANT - RESUMING INTERRUPTED TASK:
+This task was previously interrupted. Here is the saved progress:
+
+$(cat "$progress_file")
+
+Please review the uncommitted files and continue/complete the implementation."
+    fi
+  fi
+
   local prompt="You are implementing a task from $TASKS_FILE.
 
 TASK: $task
-
+${resume_context}
 Instructions:
 1. Read relevant existing code to understand the codebase
 2. Implement the task completely
@@ -430,8 +560,15 @@ Instructions:
 # Main review phase - runs Claude CR until no issues found
 run_code_review() {
   local task="$1"
+  local start_iter="${2:-1}"
 
-  for iter in $(seq 1 $MAX_REVIEW_ITERATIONS); do
+  # Set current phase for trap
+  CURRENT_PHASE="review"
+
+  for iter in $(seq $start_iter $MAX_REVIEW_ITERATIONS); do
+    # Track current iteration for trap
+    CURRENT_REVIEW_ITERATION=$iter
+
     log "────────────────────────────────────────"
     log "CLAUDE CR iteration $iter/$MAX_REVIEW_ITERATIONS"
     update_status "$task" "C:$iter"
@@ -495,17 +632,43 @@ main() {
     log "Task log: $CURRENT_TASK_LOG"
     log "════════════════════════════════════════════════════════"
 
-    # Step 1: Implement the task
-    if ! implement_task "$task"; then
-      update_status "$task" "!"
-      log "TASK FAILED: $task (implementation failed)"
-      failed=$((failed + 1))
-      CURRENT_TASK=""
-      continue
+    # Check for resume info
+    local resuming="false"
+    local skip_implement="false"
+    local review_start_iter=1
+
+    if load_task_progress "$task"; then
+      resuming="true"
+      local task_id=$(get_task_id "$task")
+      log "RESUMING: Found progress file for task $task_id"
+      log "  Previous phase: $RESUME_PHASE"
+      log "  Previous review iteration: $RESUME_REVIEW_ITER"
+
+      if [ "$RESUME_PHASE" = "review" ]; then
+        # If we were in review phase, skip implementation
+        skip_implement="true"
+        review_start_iter=$RESUME_REVIEW_ITER
+        log "  Skipping implementation, resuming at review iteration $review_start_iter"
+      else
+        log "  Resuming implementation phase"
+      fi
+    fi
+
+    # Step 1: Implement the task (skip if resuming from review)
+    if [ "$skip_implement" = "false" ]; then
+      if ! implement_task "$task" "$resuming"; then
+        update_status "$task" "!"
+        log "TASK FAILED: $task (implementation failed)"
+        delete_task_progress "$task"
+        failed=$((failed + 1))
+        CURRENT_TASK=""
+        CURRENT_PHASE=""
+        continue
+      fi
     fi
 
     # Step 2: Code Review Phase (Claude CR only)
-    if run_code_review "$task"; then
+    if run_code_review "$task" "$review_start_iter"; then
       # Only commit after review passes with no issues
       log "════════════════════════════════════════════════════════"
       log "REVIEW PASSED - Committing..."
@@ -529,16 +692,21 @@ EOF
       log "TASK COMPLETED: $task"
       completed=$((completed + 1))
 
+      # Delete progress file on successful completion
+      delete_task_progress "$task"
+
       # Generate and log status summary after each completed task
       generate_status_summary
     else
       update_status "$task" "!"
       log "TASK FAILED: $task (review phase failed)"
+      delete_task_progress "$task"
       failed=$((failed + 1))
     fi
 
     # Clear current task after processing
     CURRENT_TASK=""
+    CURRENT_PHASE=""
   done
 
   local end_time=$(date +%s)
@@ -566,8 +734,15 @@ cleanup() {
   local exit_code=$?
   if [ -n "$CURRENT_TASK" ]; then
     printf '%s\n' "[$(date '+%Y-%m-%d %H:%M:%S')] Script interrupted while processing: $CURRENT_TASK" | tee -a "$LOG_FILE"
-    # Mark task as failed if interrupted mid-processing
-    update_status "$CURRENT_TASK" "!"
+    # Save task progress for resume instead of marking as failed
+    if save_task_progress "$CURRENT_TASK" "$CURRENT_PHASE" "$CURRENT_REVIEW_ITERATION"; then
+      local task_id=$(get_task_id "$CURRENT_TASK")
+      printf '%s\n' "[$(date '+%Y-%m-%d %H:%M:%S')] Progress saved to: $(get_progress_file "$task_id")" | tee -a "$LOG_FILE"
+      # Keep task marked as in-progress (don't change status)
+    else
+      # Fallback: mark as failed if we couldn't save progress
+      update_status "$CURRENT_TASK" "!"
+    fi
   fi
   exit $exit_code
 }
