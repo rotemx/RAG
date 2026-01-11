@@ -47,6 +47,18 @@
 
 ---
 
+## Task Status Legend
+
+| Symbol  | Status      | Description                               |
+| ------- | ----------- | ----------------------------------------- |
+| `[ ]`   | Pending     | Task not yet started                      |
+| `[~]`   | In Progress | Task currently being implemented          |
+| `[C:N]` | Code Review | Code review iteration N in progress       |
+| `[x]`   | Completed   | Task successfully completed and committed |
+| `[!]`   | Failed      | Task failed (implementation or review)    |
+
+---
+
 # EPIC 1: Project Infrastructure Setup
 
 **Goal**: Establish the foundational project structure, tooling, and cloud services.
@@ -141,7 +153,23 @@
   - Comprehensive setup guide created with step-by-step instructions
   - Free tier provides: 1 GB storage, 1 cluster, ~500K vectors
   - **Manual steps required**: User must create account at https://cloud.qdrant.io/
-- [~] **Task 1.3.2**: Create cluster with appropriate settings - Setup guide at `documentation/QDRANT_CLOUD_SETUP.md`, client code at `lib/src/qdrant/`
+- [C:1] **Task 1.3.2**: Create cluster with appropriate settings - Setup guide at `documentation/QDRANT_CLOUD_SETUP.md`, client code at `lib/src/qdrant/`
+  - Comprehensive setup guide with 9 steps including verification
+  - Recommended cluster settings defined in `lib/src/qdrant/config.ts`:
+    - Cluster name: `israeli-law-rag`
+    - Region: `aws-us-east-1` (optimal for Vercel)
+    - Tier: `free` (1 GB storage, shared infrastructure)
+  - Cluster verification script: `scripts/src/verify-qdrant-cluster.ts`
+    - Run with: `npm run verify-qdrant -w @israeli-law-rag/scripts`
+    - Options: `--verbose` for detailed diagnostics, `--capacity` for capacity estimates
+  - Client utilities in `lib/src/qdrant/client.ts`:
+    - `runClusterDiagnostics()` - comprehensive cluster health check
+    - `verifyClusterSettings()` - verify collection settings match expected values
+    - `formatDiagnosticsReport()` / `formatSettingsVerification()` - formatted output
+  - Capacity planning in `lib/src/qdrant/config.ts`:
+    - `estimateCapacity()` - estimate storage requirements
+    - `estimateIsraeliLawsCapacity()` - project-specific estimates (~400MB, fits in free tier)
+  - **Manual steps required**: User must create cluster in Qdrant Cloud dashboard
 - [x] **Task 1.3.3**: Create `israeli_laws` collection with:
   - Vector size: 1024 (e5-large dimensions)
   - Distance metric: Cosine
@@ -262,7 +290,7 @@
   - Custom `LLMError` class with structured error info
   - Utility functions: `isLLMError()`, `isRetryableError()`, `getRetryDelay()`
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [C:1] **Task 2.1.3**: Implement factory function `createLLMAdapter()`
+- [x] **Task 2.1.3**: Implement factory function `createLLMAdapter()`
   - Implementation: `lib/src/llm/factory.ts`
   - Main factory function `createLLMAdapter()` creates adapter based on provider config
   - Provider-specific convenience functions: `createAnthropicAdapter()`, `createOpenAIAdapter()`, `createGeminiAdapter()`
@@ -271,7 +299,7 @@
   - Full Zod validation of input configuration
   - Proper error handling with `LLMError` for invalid config or unregistered providers
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [ ] **Task 2.1.4**: Add configuration validation with Zod
+- [!] **Task 2.1.4**: Add configuration validation with Zod
   - Implementation: `lib/src/llm/validation.ts`
   - Comprehensive validation utilities using Zod schemas
   - Environment variable validation for all providers (Anthropic, OpenAI, Gemini)
@@ -288,7 +316,7 @@
 
 ### Tasks:
 
-- [ ] **Task 2.2.1**: Install `@anthropic-ai/sdk`
+- [!] **Task 2.2.1**: Install `@anthropic-ai/sdk`
   - Package: `@anthropic-ai/sdk@^0.20.6` (installed: 0.20.9)
   - Location: `lib/package.json` dependencies
   - Verified: Package imports successfully
