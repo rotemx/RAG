@@ -502,9 +502,17 @@ main() {
       log "════════════════════════════════════════════════════════"
       log "REVIEW PASSED - Committing..."
       git add -A
+      # Extract task description and convert to lowercase for commitlint compliance
+      # Task format: **Task X.Y.Z**: Description -> extract "Description" and lowercase first char
+      local task_desc=$(echo "$task" | sed 's/.*\*\*: //')
+      local first_char=$(echo "$task_desc" | cut -c1 | tr '[:upper:]' '[:lower:]')
+      local rest=$(echo "$task_desc" | cut -c2-)
+      local commit_subject="${first_char}${rest}"
       # Use HEREDOC for safe commit message with special characters
       git commit -m "$(cat <<EOF
-feat: $task
+feat: $commit_subject
+
+$task
 EOF
 )" || true
       git push || log "WARNING: git push failed, continuing..."
