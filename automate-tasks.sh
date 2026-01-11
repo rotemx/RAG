@@ -118,7 +118,7 @@ run_claude_with_retry() {
     local tmpfile=$(mktemp)
 
     # Run Claude and capture output
-    claude --dangerously-skip-permissions --print --verbose --output-format text -p "$prompt" 2>&1 | tee -a "$LOG_FILE" -a "$CURRENT_TASK_LOG" "$tmpfile"
+    claude --dangerously-skip-permissions --print --verbose --output-format text -p "$prompt" 2>&1 | tee -a "$LOG_FILE" "$CURRENT_TASK_LOG" "$tmpfile"
     local claude_exit=${PIPESTATUS[0]}
 
     # Read output from temp file

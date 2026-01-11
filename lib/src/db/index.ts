@@ -78,6 +78,25 @@ export {
   rowToFuzzyLawResult,
 } from './types.js';
 
+// Types and schemas - Query Logs (Analytics)
+export {
+  QueryStatus,
+  QuerySource,
+  QueryLogSchema,
+  CreateQueryLogInputSchema,
+  UpdateQueryLogInputSchema,
+  type QueryLog,
+  type QueryLogRow,
+  type CreateQueryLogInput,
+  type UpdateQueryLogInput,
+  type GetQueryLogsOptions,
+  type QueryLogsStats,
+  type HourlyQueryCount,
+  type TopQuery,
+  type ProviderStats,
+  rowToQueryLog,
+} from './types.js';
+
 // Configuration
 export {
   DatabaseConfigSchema,
@@ -170,6 +189,30 @@ export {
   searchLawsCombined,
   searchChunksSimple,
   getFtsStatus,
+
+  // Query Logs CRUD operations (Analytics)
+  insertQueryLog,
+  getQueryLogByQueryId,
+  getQueryLogById,
+  getQueryLogs,
+  getRecentQueryLogs,
+  getQueryLogsForSession,
+  getFailedQueryLogs,
+  updateQueryLog,
+  markQueryProcessing,
+  markQueryCompleted,
+  markQueryFailed,
+  addQueryFeedback,
+  deleteOldQueryLogs,
+  deleteQueryLog,
+
+  // Query Logs stats and analytics
+  getQueryLogsStats,
+  getHourlyQueryCounts,
+  getTopQueries,
+  getProviderStats,
+  queryLogExists,
+  searchQueryLogs,
 } from './client.js';
 
 // Migration utilities

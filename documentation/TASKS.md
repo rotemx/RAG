@@ -189,7 +189,7 @@
   - TypeScript types: `lib/src/db/types.ts` (LawTopic, LawTopicRow, CreateLawTopicInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for law-topics)
   - Run migration with: `psql -h localhost -U scraper -d knesset_laws -f lib/src/db/migrations/003_create_law_topics.sql`
-- [C:2] **Task 1.4.4**: Add full-text search indexes using GIN
+- [x] **Task 1.4.4**: Add full-text search indexes using GIN
   - Migration SQL: `lib/src/db/migrations/004_add_fts_indexes.sql`
   - TypeScript types: `lib/src/db/types.ts` (FtsChunkResult, FtsLawResult, FtsTopicResult, FuzzyLawResult, etc.)
   - Database client: `lib/src/db/client.ts` (searchChunksFts, searchLawsFts, searchTopicsFts, searchLawsFuzzy, etc.)
@@ -200,7 +200,7 @@
     - Trigram indexes (pg_trgm) for fuzzy/typo-tolerant search
     - PostgreSQL stored functions for efficient search with ranking
     - TypeScript client functions with fallback for pre-migration compatibility
-- [ ] **Task 1.4.5**: Create `query_logs` table for analytics (optional)
+- [!] **Task 1.4.5**: Create `query_logs` table for analytics (optional)
   - Migration SQL: `lib/src/db/migrations/005_create_query_logs.sql`
   - TypeScript types: `lib/src/db/types.ts` (QueryLog, QueryLogRow, CreateQueryLogInput, UpdateQueryLogInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for query logs, analytics functions)
@@ -213,7 +213,7 @@
     - User feedback (ratings 1-5, feedback text)
     - Analytics functions (get_query_stats, get_hourly_query_counts, get_top_queries, get_provider_stats)
     - Indexes for efficient querying (BRIN for time-series, GIN for tags/topics, FTS for query text)
-- [ ] **Task 1.4.6**: Write migration scripts
+- [C:1] **Task 1.4.6**: Write migration scripts
   - Migration runner: `lib/src/db/migrations.ts` (TypeScript utilities)
   - Migration script: `scripts/src/run-migrations.ts` (CLI runner)
   - Rollback migrations: `lib/src/db/migrations/*.down.sql`
