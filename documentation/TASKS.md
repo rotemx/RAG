@@ -154,7 +154,7 @@
   - `topicId` (keyword)
   - Implementation: `lib/src/qdrant/client.ts` (`createPayloadIndexes`)
   - Script: `scripts/src/create-indexes.ts` (run with `npm run create-indexes`)
-- [C:3] **Task 1.3.5**: Document connection credentials securely
+- [x] **Task 1.3.5**: Document connection credentials securely
   - Comprehensive credentials guide at `documentation/CREDENTIALS.md`
   - Covers all required environment variables (Anthropic, Qdrant, PostgreSQL)
   - Covers optional LLM providers (OpenAI, Google Gemini) for future provider switching
@@ -174,7 +174,7 @@
 
 ### Tasks:
 
-- [ ] **Task 1.4.1**: Create `law_chunks` table for processed text chunks
+- [C:2] **Task 1.4.1**: Create `law_chunks` table for processed text chunks
   - Migration SQL: `lib/src/db/migrations/001_create_law_chunks.sql`
   - TypeScript types: `lib/src/db/types.ts`
   - Database client: `lib/src/db/client.ts`
@@ -893,6 +893,7 @@
 ### Tasks:
 
 - [ ] **Task 5.1.1**: Create `api/chat.ts` endpoint:
+
   ```typescript
   POST /api/chat
   Request: { message: string, conversationHistory?: Message[] }
@@ -908,6 +909,7 @@
     - CORS support
     - Comprehensive error handling (RAG errors, validation errors, generic errors)
     - Type exports: `ChatRequest`, `ChatResponse`, `Source`, `Metadata`
+
 - [ ] **Task 5.1.2**: Implement request validation with Zod
   - Implementation: `api/chat.ts`
   - Features:
