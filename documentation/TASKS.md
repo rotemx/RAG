@@ -213,7 +213,7 @@
     - User feedback (ratings 1-5, feedback text)
     - Analytics functions (get_query_stats, get_hourly_query_counts, get_top_queries, get_provider_stats)
     - Indexes for efficient querying (BRIN for time-series, GIN for tags/topics, FTS for query text)
-- [C:1] **Task 1.4.6**: Write migration scripts
+- [x] **Task 1.4.6**: Write migration scripts
   - Migration runner: `lib/src/db/migrations.ts` (TypeScript utilities)
   - Migration script: `scripts/src/run-migrations.ts` (CLI runner)
   - Rollback migrations: `lib/src/db/migrations/*.down.sql`
@@ -242,7 +242,7 @@
 
 ### Tasks:
 
-- [ ] **Task 2.1.1**: Define TypeScript interfaces:
+- [C:1] **Task 2.1.1**: Define TypeScript interfaces:
   - Implementation: `lib/src/llm/types.ts`
   - Includes Zod schemas with inferred TypeScript types
   - Core interfaces: `LLMConfig`, `LLMMessage`, `LLMResponse`
