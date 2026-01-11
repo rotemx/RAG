@@ -179,12 +179,12 @@
   - TypeScript types: `lib/src/db/types.ts`
   - Database client: `lib/src/db/client.ts`
   - Run migration with: `psql -h localhost -U scraper -d knesset_laws -f lib/src/db/migrations/001_create_law_chunks.sql`
-- [C:2] **Task 1.4.2**: Create `topics` table for auto-generated categories
+- [x] **Task 1.4.2**: Create `topics` table for auto-generated categories
   - Migration SQL: `lib/src/db/migrations/002_create_topics.sql`
   - TypeScript types: `lib/src/db/types.ts` (Topic, TopicRow, CreateTopicInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for topics)
   - Run migration with: `psql -h localhost -U scraper -d knesset_laws -f lib/src/db/migrations/002_create_topics.sql`
-- [ ] **Task 1.4.3**: Create `law_topics` junction table (many-to-many)
+- [C:3] **Task 1.4.3**: Create `law_topics` junction table (many-to-many)
   - Migration SQL: `lib/src/db/migrations/003_create_law_topics.sql`
   - TypeScript types: `lib/src/db/types.ts` (LawTopic, LawTopicRow, CreateLawTopicInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for law-topics)
