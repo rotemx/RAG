@@ -184,12 +184,12 @@
   - TypeScript types: `lib/src/db/types.ts` (Topic, TopicRow, CreateTopicInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for topics)
   - Run migration with: `psql -h localhost -U scraper -d knesset_laws -f lib/src/db/migrations/002_create_topics.sql`
-- [C:3] **Task 1.4.3**: Create `law_topics` junction table (many-to-many)
+- [x] **Task 1.4.3**: Create `law_topics` junction table (many-to-many)
   - Migration SQL: `lib/src/db/migrations/003_create_law_topics.sql`
   - TypeScript types: `lib/src/db/types.ts` (LawTopic, LawTopicRow, CreateLawTopicInput, etc.)
   - Database client: `lib/src/db/client.ts` (CRUD operations for law-topics)
   - Run migration with: `psql -h localhost -U scraper -d knesset_laws -f lib/src/db/migrations/003_create_law_topics.sql`
-- [ ] **Task 1.4.4**: Add full-text search indexes using GIN
+- [C:2] **Task 1.4.4**: Add full-text search indexes using GIN
   - Migration SQL: `lib/src/db/migrations/004_add_fts_indexes.sql`
   - TypeScript types: `lib/src/db/types.ts` (FtsChunkResult, FtsLawResult, FtsTopicResult, FuzzyLawResult, etc.)
   - Database client: `lib/src/db/client.ts` (searchChunksFts, searchLawsFts, searchTopicsFts, searchLawsFuzzy, etc.)
