@@ -403,7 +403,7 @@
   - Helper method stubs: `convertMessages()`, `handleError()`, `extractRetryAfter()`
   - Auto-registers with factory via `registerAdapter()`
   - Export: `lib/src/llm/adapters/index.ts` (re-exported from main `lib/src/llm/index.ts`)
-- [C:3] **Task 2.3.2**: Create `GeminiAdapter` stub
+- [x] **Task 2.3.2**: Create `GeminiAdapter` stub
   - Implementation: `lib/src/llm/adapters/gemini.ts`
   - Stub class extending `LLMAdapter` base class
   - Includes `GeminiAdapterConfig` interface with retry and tracking options
@@ -412,7 +412,7 @@
   - Supports both standard Gemini API and Vertex AI configuration (projectId, location)
   - Auto-registers with factory via `registerAdapter()`
   - Export: `lib/src/llm/adapters/index.ts` (re-exported from main `lib/src/llm/index.ts`)
-- [ ] **Task 2.3.3**: Document provider-specific considerations
+- [C:1] **Task 2.3.3**: Document provider-specific considerations
   - Documentation: `documentation/LLM_PROVIDER_CONSIDERATIONS.md`
   - Comprehensive guide covering:
     - Provider comparison table (Anthropic, OpenAI, Gemini)
@@ -424,6 +424,10 @@
     - Provider switching guide
     - Security considerations
     - Troubleshooting common issues
+    - Advanced configuration (factory pattern, retry, token tracking, streaming)
+    - API response structure comparison across providers
+    - Streaming implementation details
+    - Hebrew Performance Comparison Matrix with detailed analysis
 - [ ] **Task 2.3.4**: Create comparison matrix for Hebrew performance
   - Documentation: `documentation/LLM_PROVIDER_CONSIDERATIONS.md` (Hebrew Performance Comparison Matrix section)
   - Comprehensive comparison covering:
