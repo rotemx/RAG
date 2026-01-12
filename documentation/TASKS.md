@@ -428,7 +428,7 @@
     - API response structure comparison across providers
     - Streaming implementation details
     - Hebrew Performance Comparison Matrix with detailed analysis
-- [C:1] **Task 2.3.4**: Create comparison matrix for Hebrew performance
+- [x] **Task 2.3.4**: Create comparison matrix for Hebrew performance
   - Documentation: `documentation/LLM_PROVIDER_CONSIDERATIONS.md` (Hebrew Performance Comparison Matrix section)
   - Comprehensive comparison covering:
     - Overall Hebrew capability ratings (fluency, grammar, RTL, legal terminology)
@@ -462,7 +462,11 @@
 
 ### Tasks:
 
-- [ ] **Task 3.1.1**: Install `pdf-parse` library
+- [C:1] **Task 3.1.1**: Install `pdf-parse` library
+  - Package: `pdf-parse@^1.1.1` (installed in lib workspace)
+  - Types: `@types/pdf-parse@^1.1.4` (devDependency)
+  - Location: `lib/package.json` dependencies
+  - Verified: Package installed and available in node_modules
 - [ ] **Task 3.1.2**: Create `extractPdfText()` function
   - Implementation: `lib/src/pdf/extractor.ts`
   - Types: `lib/src/pdf/types.ts`
