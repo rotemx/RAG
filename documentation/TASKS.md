@@ -369,7 +369,7 @@
     - Global tracker singleton option
   - Utility functions: `formatCost()`, `formatTokens()`, `createUsageSummary()`
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [C:1] **Task 2.2.6**: Write unit tests for adapter
+- [x] **Task 2.2.6**: Write unit tests for adapter
   - Test file: `tests/llm/adapters/anthropic.test.ts`
   - Vitest configuration: `vitest.config.ts`
   - Test coverage:
@@ -395,7 +395,7 @@
 
 ### Tasks:
 
-- [ ] **Task 2.3.1**: Create `OpenAIAdapter` stub
+- [x] **Task 2.3.1**: Create `OpenAIAdapter` stub
   - Implementation: `lib/src/llm/adapters/openai.ts`
   - Stub class extending `LLMAdapter` base class
   - Includes `OpenAIAdapterConfig` interface with retry and tracking options
@@ -403,7 +403,7 @@
   - Helper method stubs: `convertMessages()`, `handleError()`, `extractRetryAfter()`
   - Auto-registers with factory via `registerAdapter()`
   - Export: `lib/src/llm/adapters/index.ts` (re-exported from main `lib/src/llm/index.ts`)
-- [ ] **Task 2.3.2**: Create `GeminiAdapter` stub
+- [C:3] **Task 2.3.2**: Create `GeminiAdapter` stub
   - Implementation: `lib/src/llm/adapters/gemini.ts`
   - Stub class extending `LLMAdapter` base class
   - Includes `GeminiAdapterConfig` interface with retry and tracking options
