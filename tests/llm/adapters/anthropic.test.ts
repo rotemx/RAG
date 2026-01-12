@@ -21,12 +21,7 @@ import {
   TimeoutError,
   NetworkError,
 } from '../../../lib/src/llm/errors.js';
-import {
-  type LLMMessage,
-  type LLMResponse,
-  type LLMStreamChunk,
-  LLMProvider,
-} from '../../../lib/src/llm/types.js';
+import { type LLMMessage, type LLMStreamChunk } from '../../../lib/src/llm/types.js';
 import type { RetryEvent } from '../../../lib/src/llm/types.js';
 
 // =============================================================================
@@ -79,7 +74,9 @@ vi.mock('@anthropic-ai/sdk', () => {
 // Test Fixtures
 // =============================================================================
 
-const createMockConfig = (overrides: Partial<AnthropicAdapterConfig> = {}): AnthropicAdapterConfig => ({
+const createMockConfig = (
+  overrides: Partial<AnthropicAdapterConfig> = {}
+): AnthropicAdapterConfig => ({
   provider: 'anthropic' as const,
   model: 'claude-3-5-sonnet-20241022',
   maxTokens: 4096,
@@ -88,9 +85,7 @@ const createMockConfig = (overrides: Partial<AnthropicAdapterConfig> = {}): Anth
   ...overrides,
 });
 
-const createMockMessages = (): LLMMessage[] => [
-  { role: 'user', content: 'Hello, how are you?' },
-];
+const createMockMessages = (): LLMMessage[] => [{ role: 'user', content: 'Hello, how are you?' }];
 
 const createMockMessagesWithSystem = (): LLMMessage[] => [
   { role: 'system', content: 'You are a helpful assistant.' },
@@ -558,8 +553,8 @@ describe('AnthropicAdapter', () => {
 
       const responsePromise = adapter.complete(messages);
 
-      // Advance timers to allow retry
-      await vi.advanceTimersByTimeAsync(200);
+      // Run all pending timers to allow retry to complete
+      await vi.runAllTimersAsync();
 
       const response = await responsePromise;
       expect(response.content).toBe('Hello! I am doing well.');
@@ -584,8 +579,8 @@ describe('AnthropicAdapter', () => {
 
       const responsePromise = adapter.complete(messages);
 
-      // Advance timers to allow retry
-      await vi.advanceTimersByTimeAsync(200);
+      // Run all pending timers to allow retry to complete
+      await vi.runAllTimersAsync();
 
       const response = await responsePromise;
       expect(response.content).toBe('Hello! I am doing well.');
@@ -640,8 +635,8 @@ describe('AnthropicAdapter', () => {
 
       const responsePromise = adapter.complete(messages);
 
-      // Advance timers to allow retry
-      await vi.advanceTimersByTimeAsync(200);
+      // Run all pending timers to allow retry to complete
+      await vi.runAllTimersAsync();
 
       await responsePromise;
 
@@ -666,12 +661,20 @@ describe('AnthropicAdapter', () => {
       const serverError = new Anthropic.APIError(500, 'Internal server error');
       mockClient.messages.create.mockRejectedValue(serverError);
 
-      const responsePromise = adapter.complete(messages);
+      let caughtError: unknown;
+      const responsePromise = adapter.complete(messages).catch((e) => {
+        caughtError = e;
+      });
 
-      // Advance timers through all retry attempts
-      await vi.advanceTimersByTimeAsync(1000);
+      // Run all pending timers to exhaust retry attempts
+      await vi.runAllTimersAsync();
 
-      await expect(responsePromise).rejects.toThrow(ServerError);
+      // Wait for the promise to settle
+      await responsePromise;
+
+      // Verify error was caught
+      expect(caughtError).toBeInstanceOf(ServerError);
+
       // Initial attempt + maxRetries
       expect(mockClient.messages.create).toHaveBeenCalledTimes(3);
     });
@@ -715,7 +718,9 @@ describe('AnthropicAdapter', () => {
 
     it('should report tracking status correctly', () => {
       const enabledAdapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
-      const disabledAdapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: false }));
+      const disabledAdapter = new AnthropicAdapter(
+        createMockConfig({ enableTokenTracking: false })
+      );
 
       expect(enabledAdapter.isTrackingEnabled).toBe(true);
       expect(disabledAdapter.isTrackingEnabled).toBe(false);
@@ -821,6 +826,556 @@ describe('AnthropicAdapter', () => {
       expect(returnedConfig.model).toBe('claude-3-5-sonnet-20241022');
       expect(returnedConfig.maxTokens).toBe(4096);
       expect(returnedConfig.temperature).toBe(0.3);
+    });
+  });
+
+  // ===========================================================================
+  // streamWithTracking() Tests
+  // ===========================================================================
+
+  describe('streamWithTracking()', () => {
+    it('should track usage from stream when tracking enabled', async () => {
+      const config = createMockConfig({
+        enableTokenTracking: true,
+        retry: { maxRetries: 0 },
+      });
+      const adapter = new AnthropicAdapter(config);
+      const messages = createMockMessages();
+
+      const mockStreamEvents = [
+        { type: 'message_start', message: { usage: { input_tokens: 15 } } },
+        { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hi!' } },
+        { type: 'message_delta', usage: { output_tokens: 3 } },
+        { type: 'message_stop' },
+      ];
+
+      const mockStreamInstance = {
+        [Symbol.asyncIterator]: async function* () {
+          for (const event of mockStreamEvents) {
+            yield event;
+          }
+        },
+      };
+
+      mockClient.messages.stream.mockResolvedValue(mockStreamInstance);
+
+      const { stream, getUsageRecord } = adapter.streamWithTracking(messages);
+
+      // Consume the stream
+      const chunks: LLMStreamChunk[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+
+      // Usage record should be available after stream completes
+      const usageRecord = getUsageRecord();
+      expect(usageRecord).toBeDefined();
+      expect(usageRecord?.usage.inputTokens).toBe(15);
+      expect(usageRecord?.usage.outputTokens).toBe(3);
+      expect(usageRecord?.provider).toBe('anthropic');
+    });
+
+    it('should not track usage when tracking disabled', async () => {
+      const config = createMockConfig({
+        enableTokenTracking: false,
+        retry: { maxRetries: 0 },
+      });
+      const adapter = new AnthropicAdapter(config);
+      const messages = createMockMessages();
+
+      const mockStreamEvents = [
+        { type: 'message_start', message: { usage: { input_tokens: 10 } } },
+        { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hi' } },
+        { type: 'message_delta', usage: { output_tokens: 2 } },
+        { type: 'message_stop' },
+      ];
+
+      const mockStreamInstance = {
+        [Symbol.asyncIterator]: async function* () {
+          for (const event of mockStreamEvents) {
+            yield event;
+          }
+        },
+      };
+
+      mockClient.messages.stream.mockResolvedValue(mockStreamInstance);
+
+      const { stream, getUsageRecord } = adapter.streamWithTracking(messages);
+
+      // Consume the stream
+      for await (const _chunk of stream) {
+        // Consume all chunks
+      }
+
+      expect(getUsageRecord()).toBeUndefined();
+    });
+
+    it('should include metadata in usage record', async () => {
+      const config = createMockConfig({
+        enableTokenTracking: true,
+        retry: { maxRetries: 0 },
+      });
+      const adapter = new AnthropicAdapter(config);
+      const messages = createMockMessages();
+
+      const mockStreamEvents = [
+        { type: 'message_start', message: { usage: { input_tokens: 10 } } },
+        { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Test' } },
+        { type: 'message_delta', usage: { output_tokens: 2 } },
+        { type: 'message_stop' },
+      ];
+
+      const mockStreamInstance = {
+        [Symbol.asyncIterator]: async function* () {
+          for (const event of mockStreamEvents) {
+            yield event;
+          }
+        },
+      };
+
+      mockClient.messages.stream.mockResolvedValue(mockStreamInstance);
+
+      const { stream, getUsageRecord } = adapter.streamWithTracking(messages, undefined, {
+        sessionId: 'test-session',
+        requestType: 'chat',
+      });
+
+      for await (const _chunk of stream) {
+        // Consume all chunks
+      }
+
+      const usageRecord = getUsageRecord();
+      expect(usageRecord?.metadata).toEqual({
+        sessionId: 'test-session',
+        requestType: 'chat',
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Edge Case Tests
+  // ===========================================================================
+
+  describe('edge cases', () => {
+    describe('retry-after header parsing', () => {
+      it('should use default retry delay when retry-after header is missing', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        // Error without retry-after header
+        const error = new Anthropic.APIError(429, 'Rate limit exceeded');
+        mockClient.messages.create.mockRejectedValue(error);
+
+        try {
+          await adapter.complete(messages);
+          expect.fail('Should have thrown');
+        } catch (e) {
+          expect(e).toBeInstanceOf(RateLimitError);
+          // Default is 60 seconds (60000ms)
+          expect((e as RateLimitError).retryAfterMs).toBe(60000);
+        }
+      });
+
+      it('should handle non-numeric retry-after header gracefully', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        const error = new Anthropic.APIError(429, 'Rate limit exceeded', {
+          'retry-after': 'invalid',
+        });
+        mockClient.messages.create.mockRejectedValue(error);
+
+        try {
+          await adapter.complete(messages);
+          expect.fail('Should have thrown');
+        } catch (e) {
+          expect(e).toBeInstanceOf(RateLimitError);
+          // Falls back to default when parsing fails
+          expect((e as RateLimitError).retryAfterMs).toBe(60000);
+        }
+      });
+    });
+
+    describe('message handling', () => {
+      it('should handle conversation with assistant messages', async () => {
+        const config = createMockConfig();
+        const adapter = new AnthropicAdapter(config);
+
+        const messages: LLMMessage[] = [
+          { role: 'user', content: 'Hi' },
+          { role: 'assistant', content: 'Hello!' },
+          { role: 'user', content: 'How are you?' },
+        ];
+
+        mockClient.messages.create.mockResolvedValue(createMockResponse());
+
+        await adapter.complete(messages);
+
+        expect(mockClient.messages.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            messages: [
+              { role: 'user', content: 'Hi' },
+              { role: 'assistant', content: 'Hello!' },
+              { role: 'user', content: 'How are you?' },
+            ],
+          })
+        );
+      });
+
+      it('should handle multiple system messages by using first one', async () => {
+        const config = createMockConfig();
+        const adapter = new AnthropicAdapter(config);
+
+        // Note: In practice, we only use the first system message found
+        const messages: LLMMessage[] = [
+          { role: 'system', content: 'First system message.' },
+          { role: 'user', content: 'Hello!' },
+        ];
+
+        mockClient.messages.create.mockResolvedValue(createMockResponse());
+
+        await adapter.complete(messages);
+
+        expect(mockClient.messages.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            system: 'First system message.',
+            messages: [{ role: 'user', content: 'Hello!' }],
+          })
+        );
+      });
+
+      it('should handle empty content response', async () => {
+        const config = createMockConfig();
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        mockClient.messages.create.mockResolvedValue({
+          ...createMockResponse(),
+          content: [],
+        });
+
+        const response = await adapter.complete(messages);
+
+        expect(response.content).toBe('');
+      });
+    });
+
+    describe('stream edge cases', () => {
+      it('should handle stream with no content deltas', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        // Stream with only start and stop events, no content
+        const mockStreamEvents = [
+          { type: 'message_start', message: { usage: { input_tokens: 10 } } },
+          { type: 'message_delta', usage: { output_tokens: 0 } },
+          { type: 'message_stop' },
+        ];
+
+        const mockStreamInstance = {
+          [Symbol.asyncIterator]: async function* () {
+            for (const event of mockStreamEvents) {
+              yield event;
+            }
+          },
+        };
+
+        mockClient.messages.stream.mockResolvedValue(mockStreamInstance);
+
+        const chunks: LLMStreamChunk[] = [];
+        for await (const chunk of adapter.stream(messages)) {
+          chunks.push(chunk);
+        }
+
+        // Only final chunk should be present
+        expect(chunks.length).toBe(1);
+        expect(chunks[0].done).toBe(true);
+        expect(chunks[0].content).toBe('');
+      });
+
+      it('should handle input_json_delta events gracefully', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        // Stream with tool use delta that should be ignored
+        const mockStreamEvents = [
+          { type: 'message_start', message: { usage: { input_tokens: 10 } } },
+          { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hello' } },
+          {
+            type: 'content_block_delta',
+            delta: { type: 'input_json_delta', partial_json: '{"key":' },
+          },
+          { type: 'message_delta', usage: { output_tokens: 5 } },
+          { type: 'message_stop' },
+        ];
+
+        const mockStreamInstance = {
+          [Symbol.asyncIterator]: async function* () {
+            for (const event of mockStreamEvents) {
+              yield event;
+            }
+          },
+        };
+
+        mockClient.messages.stream.mockResolvedValue(mockStreamInstance);
+
+        const chunks: LLMStreamChunk[] = [];
+        for await (const chunk of adapter.stream(messages)) {
+          chunks.push(chunk);
+        }
+
+        // Should only have the text chunk and final chunk
+        const textChunks = chunks.filter((c) => c.content !== '');
+        expect(textChunks.length).toBe(1);
+        expect(textChunks[0].content).toBe('Hello');
+      });
+    });
+
+    describe('error handling edge cases', () => {
+      it('should handle APIError without status code', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        // Create error with undefined status (cast to bypass type check for testing)
+        const error = new Anthropic.APIError(undefined as unknown as number, 'Unknown API error');
+        mockClient.messages.create.mockRejectedValue(error);
+
+        // Should fall through to generic LLMError handling
+        await expect(adapter.complete(messages)).rejects.toThrow(LLMError);
+      });
+
+      it('should handle 503 Service Unavailable as ServerError', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        const error = new Anthropic.APIError(503, 'Service temporarily unavailable');
+        mockClient.messages.create.mockRejectedValue(error);
+
+        await expect(adapter.complete(messages)).rejects.toThrow(ServerError);
+      });
+
+      it('should handle 502 Bad Gateway as ServerError', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        const error = new Anthropic.APIError(502, 'Bad gateway');
+        mockClient.messages.create.mockRejectedValue(error);
+
+        await expect(adapter.complete(messages)).rejects.toThrow(ServerError);
+      });
+
+      it('should handle 403 Forbidden as generic LLMError', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        const error = new Anthropic.APIError(403, 'Forbidden');
+        mockClient.messages.create.mockRejectedValue(error);
+
+        // 403 doesn't map to a specific error type, should fall through
+        await expect(adapter.complete(messages)).rejects.toThrow(LLMError);
+      });
+
+      it('should handle non-Error objects thrown', async () => {
+        const config = createMockConfig({ retry: { maxRetries: 0 } });
+        const adapter = new AnthropicAdapter(config);
+        const messages = createMockMessages();
+
+        // Throw a string instead of an Error
+        mockClient.messages.create.mockRejectedValue('String error');
+
+        await expect(adapter.complete(messages)).rejects.toThrow(LLMError);
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Token Tracker Methods Tests
+  // ===========================================================================
+
+  describe('token tracker methods', () => {
+    it('should return undefined for getTokenTracker when tracking disabled', () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: false }));
+
+      expect(adapter.getTokenTracker()).toBeUndefined();
+    });
+
+    it('should return token tracker instance when tracking enabled', () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+
+      expect(adapter.getTokenTracker()).toBeDefined();
+    });
+
+    it('should track manual usage', async () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+
+      const usageRecord = adapter.trackUsage(
+        { inputTokens: 100, outputTokens: 50 },
+        { latencyMs: 500, metadata: { custom: 'data' } }
+      );
+
+      expect(usageRecord).toBeDefined();
+      expect(usageRecord?.usage.inputTokens).toBe(100);
+      expect(usageRecord?.usage.outputTokens).toBe(50);
+    });
+
+    it('should return undefined for trackUsage when tracking disabled', () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: false }));
+
+      const result = adapter.trackUsage({ inputTokens: 10, outputTokens: 5 });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should get total tokens', async () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+      const messages = createMockMessages();
+
+      mockClient.messages.create.mockResolvedValue(createMockResponse());
+
+      await adapter.completeWithTracking(messages);
+
+      const totals = adapter.getTotalTokens();
+      expect(totals).toBeDefined();
+      expect(totals!.inputTokens).toBe(10);
+      expect(totals!.outputTokens).toBe(20);
+      expect(totals!.totalTokens).toBe(30);
+    });
+
+    it('should get total cost', async () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+      const messages = createMockMessages();
+
+      mockClient.messages.create.mockResolvedValue(createMockResponse());
+
+      await adapter.completeWithTracking(messages);
+
+      const cost = adapter.getTotalCost();
+      expect(cost).toBeDefined();
+      expect(cost).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should clear usage records', async () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+      const messages = createMockMessages();
+
+      mockClient.messages.create.mockResolvedValue(createMockResponse());
+
+      await adapter.completeWithTracking(messages);
+      expect(adapter.getTotalTokens()?.totalTokens).toBeGreaterThan(0);
+
+      adapter.clearUsageRecords();
+
+      expect(adapter.getTotalTokens()?.totalTokens).toBe(0);
+    });
+
+    it('should get usage records with filtering', async () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+      const messages = createMockMessages();
+
+      mockClient.messages.create.mockResolvedValue(createMockResponse());
+
+      await adapter.completeWithTracking(messages);
+      await adapter.completeWithTracking(messages);
+
+      const records = adapter.getUsageRecords({ limit: 1 });
+      expect(records).toBeDefined();
+      expect(records!.length).toBe(1);
+    });
+
+    it('should calculate cost for given usage', () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: true }));
+
+      const cost = adapter.calculateCost({ inputTokens: 1000, outputTokens: 500 });
+
+      expect(cost).toBeDefined();
+      expect(typeof cost).toBe('number');
+    });
+
+    it('should return undefined for calculateCost when tracking disabled', () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ enableTokenTracking: false }));
+
+      const cost = adapter.calculateCost({ inputTokens: 1000, outputTokens: 500 });
+
+      expect(cost).toBeUndefined();
+    });
+  });
+
+  // ===========================================================================
+  // Provider and Model Getter Tests
+  // ===========================================================================
+
+  describe('provider and model getters', () => {
+    it('should return correct provider', () => {
+      const adapter = new AnthropicAdapter(createMockConfig());
+
+      expect(adapter.provider).toBe('anthropic');
+    });
+
+    it('should return correct model', () => {
+      const adapter = new AnthropicAdapter(createMockConfig({ model: 'claude-3-opus-20240229' }));
+
+      expect(adapter.model).toBe('claude-3-opus-20240229');
+    });
+  });
+
+  // ===========================================================================
+  // Default Configuration Tests
+  // ===========================================================================
+
+  describe('default configuration', () => {
+    it('should use ANTHROPIC_API_KEY from environment when not provided', () => {
+      const originalEnv = process.env.ANTHROPIC_API_KEY;
+      process.env.ANTHROPIC_API_KEY = 'env-api-key';
+
+      try {
+        const config: AnthropicAdapterConfig = {
+          provider: 'anthropic',
+          model: 'claude-3-5-sonnet-20241022',
+          maxTokens: 4096,
+          temperature: 0.3,
+          // No apiKey provided
+        };
+        new AnthropicAdapter(config);
+
+        expect(Anthropic).toHaveBeenCalledWith({
+          apiKey: 'env-api-key',
+          baseURL: undefined,
+        });
+      } finally {
+        if (originalEnv !== undefined) {
+          process.env.ANTHROPIC_API_KEY = originalEnv;
+        } else {
+          delete process.env.ANTHROPIC_API_KEY;
+        }
+      }
+    });
+
+    it('should use default retry config when not provided', async () => {
+      const config = createMockConfig(); // No retry config
+      const adapter = new AnthropicAdapter(config);
+      const messages = createMockMessages();
+
+      const serverError = new Anthropic.APIError(500, 'Internal server error');
+      mockClient.messages.create
+        .mockRejectedValueOnce(serverError)
+        .mockResolvedValueOnce(createMockResponse());
+
+      const responsePromise = adapter.complete(messages);
+
+      // Default config should allow retries - run all timers to completion
+      await vi.runAllTimersAsync();
+
+      const response = await responsePromise;
+      expect(response.content).toBe('Hello! I am doing well.');
+      expect(mockClient.messages.create).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -349,7 +349,7 @@
   - Updated `AnthropicAdapter` to throw specific error types
   - Maintains backward compatibility via re-exports from `adapter.ts`
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [C:1] **Task 2.2.5**: Add token usage tracking
+- [x] **Task 2.2.5**: Add token usage tracking
   - Implementation: `lib/src/llm/token-tracker.ts`
   - Comprehensive token tracking with cost estimation
   - Provider-specific pricing for Anthropic, OpenAI, and Gemini models
@@ -369,18 +369,23 @@
     - Global tracker singleton option
   - Utility functions: `formatCost()`, `formatTokens()`, `createUsageSummary()`
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [ ] **Task 2.2.6**: Write unit tests for adapter
+- [C:1] **Task 2.2.6**: Write unit tests for adapter
   - Test file: `tests/llm/adapters/anthropic.test.ts`
   - Vitest configuration: `vitest.config.ts`
   - Test coverage:
-    - Constructor tests (configuration, client initialization)
+    - Constructor tests (configuration, client initialization, environment variables)
     - complete() method tests (success, parameters, system messages, options)
-    - stream() method tests (streaming chunks, usage tracking)
+    - stream() method tests (streaming chunks, usage tracking, edge cases)
     - Error handling tests (all error types: RateLimitError, AuthenticationError, InvalidRequestError, ModelNotFoundError, ServerError, TimeoutError, NetworkError)
-    - Retry behavior tests (rate limits, server errors, non-retryable errors, retry events)
-    - Token tracking tests (enabled/disabled, cost calculation, statistics)
+    - Retry behavior tests (rate limits, server errors, non-retryable errors, retry events, default config)
+    - Token tracking tests (enabled/disabled, cost calculation, statistics, manual tracking)
     - completeWithMetadata() tests (latency, provider info)
     - streamToCompletion() tests (chunk collection)
+    - streamWithTracking() tests (usage tracking, metadata, disabled state)
+    - Edge cases tests (retry-after parsing, message handling, stream edge cases, error handling)
+    - Token tracker methods tests (getTokenTracker, trackUsage, getTotalTokens, getTotalCost, clearUsageRecords, getUsageRecords, calculateCost)
+    - Provider and model getter tests
+    - Default configuration tests (environment API key, default retry config)
 
 ## Story 2.3: Implement Additional Adapters (Future-Ready)
 
