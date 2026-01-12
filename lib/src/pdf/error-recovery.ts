@@ -11,13 +11,9 @@ import {
   type PdfExtractionOptions,
   PdfErrorCode,
   PdfExtractionError,
-  createFailureResult,
 } from './types.js';
 import { extractPdfText } from './extractor.js';
-import {
-  extractWithFallbackChain,
-  type FallbackChainOptions,
-} from './fallback-chain.js';
+import { extractWithFallbackChain, type FallbackChainOptions } from './fallback-chain.js';
 
 // =============================================================================
 // Types and Schemas
@@ -109,11 +105,7 @@ export const RecoveryOptionsSchema = z.object({
     })
     .default({}),
   /** Callback for failure notifications */
-  onFailure: z
-    .function()
-    .args(ExtractionFailureSchema)
-    .returns(z.void())
-    .optional(),
+  onFailure: z.function().args(ExtractionFailureSchema).returns(z.void()).optional(),
   /** Callback for recovery attempts */
   onRecoveryAttempt: z
     .function()
@@ -195,7 +187,7 @@ export function classifyExtractionFailure(
 ): ExtractionFailure {
   // Handle PdfExtractionResult with error
   if (typeof error === 'object' && 'success' in error && !error.success) {
-    const result = error as PdfExtractionResult;
+    const result = error;
     const errorMessage = result.error ?? 'Unknown extraction error';
 
     // Infer error code from message
@@ -740,11 +732,7 @@ function sleep(ms: number): Promise<void> {
  * @returns Human-readable failure description
  */
 export function formatFailure(failure: ExtractionFailure): string {
-  const parts = [
-    `[${failure.code}]`,
-    failure.message,
-    `(${failure.severity})`,
-  ];
+  const parts = [`[${failure.code}]`, failure.message, `(${failure.severity})`];
 
   if (failure.filePath) {
     parts.push(`File: ${failure.filePath}`);
@@ -814,9 +802,7 @@ export function formatBatchStats(stats: BatchExtractionStats): string {
  * @param results - Array of extraction results
  * @returns Combined text and metadata
  */
-export function aggregateExtractionResults(
-  results: PdfExtractionResult[]
-): {
+export function aggregateExtractionResults(results: PdfExtractionResult[]): {
   text: string;
   totalCharCount: number;
   totalPageCount: number;

@@ -481,7 +481,7 @@
     - PDF header validation (`%PDF-` magic bytes check)
     - Structured result type with text, pageCount, metadata, charCount, success, error, method, durationMs
     - Options: `maxPages` limit, custom `pageRenderer` function
-- [C:1] **Task 3.1.3**: Implement Hebrew text cleanup utilities:
+- [x] **Task 3.1.3**: Implement Hebrew text cleanup utilities:
   - Implementation: `lib/src/pdf/hebrew-cleanup.ts`
   - Export: `lib/src/pdf/index.ts` (re-exported from main `lib/src/index.ts`)
   - Features:
@@ -497,7 +497,7 @@
     - Hebrew character utilities: `isHebrewLetter()`, `isHebrewChar()`, `countHebrewChars()`, `hebrewRatio()`
     - `detectTextDirection(text)` - returns 'rtl', 'ltr', or 'mixed'
   - Types: `HebrewCleanupOptions`, `HebrewCleanupResult` with Zod schemas
-- [ ] **Task 3.1.4**: Handle extraction failures gracefully
+- [C:1] **Task 3.1.4**: Handle extraction failures gracefully
   - Implementation: `lib/src/pdf/error-recovery.ts`
   - Types enhanced: `lib/src/pdf/types.ts` (new error codes, result fields)
   - Extractor updated: `lib/src/pdf/extractor.ts` (error codes in results)

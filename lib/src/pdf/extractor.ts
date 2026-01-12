@@ -61,22 +61,19 @@ export async function extractPdfText(
 
       // Check if file exists
       if (!existsSync(input)) {
-        throw new PdfExtractionError(
-          `PDF file not found: ${input}`,
-          PdfErrorCode.FILE_NOT_FOUND,
-          { filePath: input }
-        );
+        throw new PdfExtractionError(`PDF file not found: ${input}`, PdfErrorCode.FILE_NOT_FOUND, {
+          filePath: input,
+        });
       }
 
       // Read file into buffer
       try {
         buffer = await readFile(input);
       } catch (readError) {
-        throw new PdfExtractionError(
-          `Failed to read PDF file: ${input}`,
-          PdfErrorCode.READ_ERROR,
-          { filePath: input, cause: readError as Error }
-        );
+        throw new PdfExtractionError(`Failed to read PDF file: ${input}`, PdfErrorCode.READ_ERROR, {
+          filePath: input,
+          cause: readError as Error,
+        });
       }
     } else if (Buffer.isBuffer(input)) {
       buffer = input;
@@ -124,32 +121,31 @@ export async function extractPdfText(
 
     // Check for empty content
     if (!pdfData.text || pdfData.text.trim().length === 0) {
-      return createFailureResult(
-        'PDF contains no extractable text (may be image-based or empty)',
-        {
-          pageCount: pdfData.numpages,
-          durationMs,
-          errorCode: PdfErrorCode.EMPTY_CONTENT,
-          filePath,
-        }
-      );
+      return createFailureResult('PDF contains no extractable text (may be image-based or empty)', {
+        pageCount: pdfData.numpages,
+        durationMs,
+        errorCode: PdfErrorCode.EMPTY_CONTENT,
+        ...(filePath !== undefined && { filePath }),
+      });
     }
 
     return createSuccessResult(pdfData.text, pdfData.numpages, {
       metadata: (pdfData.metadata as Record<string, unknown> | undefined) ?? null,
       info: (pdfData.info as Record<string, unknown> | undefined) ?? null,
       durationMs,
-      filePath,
+      ...(filePath !== undefined && { filePath }),
     });
   } catch (error) {
     const durationMs = performance.now() - startTime;
+    const resolvedFilePath =
+      error instanceof PdfExtractionError ? (error.filePath ?? filePath) : filePath;
 
     // Handle PdfExtractionError with proper error code
     if (error instanceof PdfExtractionError) {
       return createFailureResult(error.message, {
         durationMs,
         errorCode: error.code,
-        filePath: error.filePath ?? filePath,
+        ...(resolvedFilePath !== undefined && { filePath: resolvedFilePath }),
       });
     }
 
@@ -161,7 +157,7 @@ export async function extractPdfText(
       return createFailureResult('PDF is password protected', {
         durationMs,
         errorCode: PdfErrorCode.PASSWORD_PROTECTED,
-        filePath,
+        ...(filePath !== undefined && { filePath }),
       });
     }
 
@@ -169,7 +165,7 @@ export async function extractPdfText(
       return createFailureResult(`Invalid or corrupted PDF: ${errorMessage}`, {
         durationMs,
         errorCode: PdfErrorCode.INVALID_PDF,
-        filePath,
+        ...(filePath !== undefined && { filePath }),
       });
     }
 
@@ -182,7 +178,7 @@ export async function extractPdfText(
       return createFailureResult(`PDF extraction timed out: ${errorMessage}`, {
         durationMs,
         errorCode: PdfErrorCode.TIMEOUT,
-        filePath,
+        ...(filePath !== undefined && { filePath }),
       });
     }
 
@@ -195,7 +191,7 @@ export async function extractPdfText(
       return createFailureResult(`PDF extraction ran out of memory: ${errorMessage}`, {
         durationMs,
         errorCode: PdfErrorCode.MEMORY_EXCEEDED,
-        filePath,
+        ...(filePath !== undefined && { filePath }),
       });
     }
 
@@ -203,7 +199,7 @@ export async function extractPdfText(
     return createFailureResult(`PDF extraction failed: ${errorMessage}`, {
       durationMs,
       errorCode: PdfErrorCode.EXTRACTION_ERROR,
-      filePath,
+      ...(filePath !== undefined && { filePath }),
     });
   }
 }
@@ -282,9 +278,7 @@ export async function extractPdfTextBatch(
   // Process in batches to limit concurrency
   for (let i = 0; i < filePaths.length; i += concurrency) {
     const batch = filePaths.slice(i, i + concurrency);
-    const batchResults = await Promise.all(
-      batch.map((path) => extractPdfText(path, options))
-    );
+    const batchResults = await Promise.all(batch.map((path) => extractPdfText(path, options)));
 
     // Append batch results (filePath is now included in each result)
     results.push(...batchResults);
