@@ -320,7 +320,7 @@
   - Package: `@anthropic-ai/sdk@^0.20.6` (installed: 0.20.9)
   - Location: `lib/package.json` dependencies
   - Verified: Package imports successfully
-- [C:1] **Task 2.2.2**: Implement `AnthropicAdapter` class:
+- [x] **Task 2.2.2**: Implement `AnthropicAdapter` class:
   - Implementation: `lib/src/llm/adapters/anthropic.ts`
   - `complete()` method for single responses
   - `stream()` method for streaming responses
@@ -328,7 +328,7 @@
   - Token usage tracking
   - Auto-registers with factory via `registerAdapter()`
   - Export: `lib/src/llm/adapters/index.ts` (re-exported from main `lib/src/llm/index.ts`)
-- [ ] **Task 2.2.3**: Handle rate limiting and retries
+- [C:1] **Task 2.2.3**: Handle rate limiting and retries
   - Implementation: `lib/src/llm/retry.ts` (retry utilities)
   - Types: `lib/src/llm/types.ts` (RetryConfig, RetryEvent, RetryEventHandler)
   - Updated: `lib/src/llm/adapters/anthropic.ts` (AnthropicAdapterConfig with retry support)
@@ -341,7 +341,7 @@
     - Event handler for logging/monitoring retry attempts
     - Support for both `complete()` and `stream()` methods
     - Abort signal support for cancellation
-- [ ] **Task 2.2.4**: Implement error handling with specific error types
+- [x] **Task 2.2.4**: Implement error handling with specific error types
   - Implementation: `lib/src/llm/errors.ts`
   - Specific error classes: `RateLimitError`, `AuthenticationError`, `InvalidRequestError`, `ModelNotFoundError`, `ContentFilteredError`, `TimeoutError`, `ServerError`, `NetworkError`
   - Type guards: `isLLMError()`, `isRateLimitError()`, `isAuthenticationError()`, etc.
