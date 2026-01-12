@@ -467,7 +467,7 @@
   - Types: `@types/pdf-parse@^1.1.4` (devDependency)
   - Location: `lib/package.json` dependencies
   - Verified: Package installed and available in node_modules
-- [C:1] **Task 3.1.2**: Create `extractPdfText()` function
+- [x] **Task 3.1.2**: Create `extractPdfText()` function
   - Implementation: `lib/src/pdf/extractor.ts`
   - Types: `lib/src/pdf/types.ts`
   - Export: `lib/src/pdf/index.ts` (re-exported from main `lib/src/index.ts`)
@@ -481,7 +481,7 @@
     - PDF header validation (`%PDF-` magic bytes check)
     - Structured result type with text, pageCount, metadata, charCount, success, error, method, durationMs
     - Options: `maxPages` limit, custom `pageRenderer` function
-- [ ] **Task 3.1.3**: Implement Hebrew text cleanup utilities:
+- [C:1] **Task 3.1.3**: Implement Hebrew text cleanup utilities:
   - Implementation: `lib/src/pdf/hebrew-cleanup.ts`
   - Export: `lib/src/pdf/index.ts` (re-exported from main `lib/src/index.ts`)
   - Features:
