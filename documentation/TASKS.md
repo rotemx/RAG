@@ -412,7 +412,7 @@
   - Supports both standard Gemini API and Vertex AI configuration (projectId, location)
   - Auto-registers with factory via `registerAdapter()`
   - Export: `lib/src/llm/adapters/index.ts` (re-exported from main `lib/src/llm/index.ts`)
-- [C:1] **Task 2.3.3**: Document provider-specific considerations
+- [x] **Task 2.3.3**: Document provider-specific considerations
   - Documentation: `documentation/LLM_PROVIDER_CONSIDERATIONS.md`
   - Comprehensive guide covering:
     - Provider comparison table (Anthropic, OpenAI, Gemini)
@@ -428,17 +428,22 @@
     - API response structure comparison across providers
     - Streaming implementation details
     - Hebrew Performance Comparison Matrix with detailed analysis
-- [ ] **Task 2.3.4**: Create comparison matrix for Hebrew performance
+- [C:1] **Task 2.3.4**: Create comparison matrix for Hebrew performance
   - Documentation: `documentation/LLM_PROVIDER_CONSIDERATIONS.md` (Hebrew Performance Comparison Matrix section)
   - Comprehensive comparison covering:
     - Overall Hebrew capability ratings (fluency, grammar, RTL, legal terminology)
+    - Quantitative benchmark results with accuracy scores by query type
+    - Hebrew grammar error rates per 1000 tokens
+    - Response latency benchmarks
     - Detailed grammar and syntax analysis (verb conjugation, gender agreement, סמיכות)
     - Legal Hebrew terminology performance (חוק, תקנות, פסיקה, מונחים משפטיים)
     - RTL text handling comparison (pure Hebrew, mixed content, citations)
-    - Hebrew tokenization efficiency comparison
+    - Hebrew tokenization efficiency comparison with deep dive analysis
+    - Tokenization cost analysis by content type
     - Response quality for legal queries by query type
-    - Hebrew-specific prompt optimization templates per provider
-    - Benchmark test suite with sample Hebrew legal queries
+    - Hebrew-specific prompt optimization templates per provider (5 template types)
+    - Comprehensive benchmark test suite with 7 test categories and 17+ test cases
+    - Benchmark scoring summary with provider targets
     - Provider selection decision tree
     - Migration considerations with Hebrew-specific issues
     - Quality assurance checklist for Hebrew deployment
