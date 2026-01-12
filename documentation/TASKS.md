@@ -462,12 +462,12 @@
 
 ### Tasks:
 
-- [C:1] **Task 3.1.1**: Install `pdf-parse` library
+- [x] **Task 3.1.1**: Install `pdf-parse` library
   - Package: `pdf-parse@^1.1.1` (installed in lib workspace)
   - Types: `@types/pdf-parse@^1.1.4` (devDependency)
   - Location: `lib/package.json` dependencies
   - Verified: Package installed and available in node_modules
-- [ ] **Task 3.1.2**: Create `extractPdfText()` function
+- [C:1] **Task 3.1.2**: Create `extractPdfText()` function
   - Implementation: `lib/src/pdf/extractor.ts`
   - Types: `lib/src/pdf/types.ts`
   - Export: `lib/src/pdf/index.ts` (re-exported from main `lib/src/index.ts`)
