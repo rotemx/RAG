@@ -497,7 +497,7 @@
     - Hebrew character utilities: `isHebrewLetter()`, `isHebrewChar()`, `countHebrewChars()`, `hebrewRatio()`
     - `detectTextDirection(text)` - returns 'rtl', 'ltr', or 'mixed'
   - Types: `HebrewCleanupOptions`, `HebrewCleanupResult` with Zod schemas
-- [C:1] **Task 3.1.4**: Handle extraction failures gracefully
+- [x] **Task 3.1.4**: Handle extraction failures gracefully
   - Implementation: `lib/src/pdf/error-recovery.ts`
   - Types enhanced: `lib/src/pdf/types.ts` (new error codes, result fields)
   - Extractor updated: `lib/src/pdf/extractor.ts` (error codes in results)
@@ -514,7 +514,7 @@
     - `formatFailure()` / `formatBatchStats()` - human-readable formatting
     - `aggregateExtractionResults()` - combine partial results
     - `isBatchSuccessful()` - check if batch meets success threshold
-- [ ] **Task 3.1.5**: Create fallback chain (pdf-parse → pdf.js → OCR)
+- [C:1] **Task 3.1.5**: Create fallback chain (pdf-parse → pdf.js → OCR)
   - Implementation: `lib/src/pdf/fallback-chain.ts`
   - Export: `lib/src/pdf/index.ts` (re-exported from main)
   - Dependencies added: `pdfjs-dist`, `tesseract.js`, `canvas` (dev)
