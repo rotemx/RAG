@@ -328,7 +328,7 @@
   - Token usage tracking
   - Auto-registers with factory via `registerAdapter()`
   - Export: `lib/src/llm/adapters/index.ts` (re-exported from main `lib/src/llm/index.ts`)
-- [C:1] **Task 2.2.3**: Handle rate limiting and retries
+- [x] **Task 2.2.3**: Handle rate limiting and retries
   - Implementation: `lib/src/llm/retry.ts` (retry utilities)
   - Types: `lib/src/llm/types.ts` (RetryConfig, RetryEvent, RetryEventHandler)
   - Updated: `lib/src/llm/adapters/anthropic.ts` (AnthropicAdapterConfig with retry support)
@@ -349,7 +349,7 @@
   - Updated `AnthropicAdapter` to throw specific error types
   - Maintains backward compatibility via re-exports from `adapter.ts`
   - Export: `lib/src/llm/index.ts` (re-exported from main `lib/src/index.ts`)
-- [ ] **Task 2.2.5**: Add token usage tracking
+- [C:1] **Task 2.2.5**: Add token usage tracking
   - Implementation: `lib/src/llm/token-tracker.ts`
   - Comprehensive token tracking with cost estimation
   - Provider-specific pricing for Anthropic, OpenAI, and Gemini models
